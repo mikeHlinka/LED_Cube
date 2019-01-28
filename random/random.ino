@@ -26,11 +26,7 @@ void loop() {
   for(int r = 0; r < 6; r++){
     digitalWrite(row[r], 0);
     for(int c = 0; c < 36; c++){
-      randomNumber = random(10);
-      if(randomNumber > 6)
-        digitalWrite(column[c], 1);
-      else
-        digitalWrite(column[c], 0);  
+      digitalWrite(column[c], random(2)); 
     }
     delay(1);
     digitalWrite(row[r], 1);
