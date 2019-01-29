@@ -16,11 +16,11 @@ int column[36] = {13, 12, 11, 10,  9, 8,
 
 volatile int gameBoard[ROW * COLUMN];
 volatile int tempBoard[ROW * COLUMN];
-int old_c;
-int new_c;
-int old_r;
-int new_r;
-volatile int dir;
+int bounce_column_old_c;
+int bounce_column_new_c;
+int bounce_column_old_r;
+int bounce_column_new_r;
+volatile int bounce_column_state;
 
 void setup(){
 //code from Anada Ghassaei
@@ -64,13 +64,9 @@ cli();
   }
   for(i = 0; i < ROW * COLUMN; i++)
     gameBoard[i] = 0;
-  gameBoard[0] = 1;
+    
   Serial.begin(9600);
-  old_c = 0;
-  new_c = 0;
-  old_r = 5;
-  new_r = 5;
-  dir = 0;
+  bounce_column_state = 0;
 sei();
 }
 
@@ -89,47 +85,97 @@ ISR(TIMER0_COMPA_vect){
   }
 }
 
-//interrupt 1: used for updating the board
+//interrupt 1: used for updating the whatever display is active
 ISR(TIMER1_COMPA_vect){
- if(dir == 0)
-    increase_column();
-  else if(dir == 1)
-    decrease_column();
+ bounce_column();
 }
 
+//generic supporting function
+//will set entire gameBoard to 1 (on)
+//meant to display a fault or error has occured
+void game_over(){
+  cli();
+    for(int i = 0; i < ROW * COLUMN; i++)
+      gameBoard[i] = 1;
+  sei();
+}
+
+//generic supporting function
+//will clear whatever is stored in the gameBoard
+void clear_gameBoard(){
+  cli();
+  for(int i = 0; i < ROW * COLUMN; i++)
+    gameBoard[i] = 0;
+  sei();
+}
+
+//main control function for the bounce control display
+//this fucntion is called whenever a gameboard needs to be updated
+void bounce_column(){
+  switch(bounce_column_state){
+    case 0:
+      setup_column();
+      break;
+    case 1:
+      increase_column();
+      break;
+    case 2:
+      decrease_column();
+      break;
+    default:
+      game_over();
+      break;
+  }
+}
+
+//supporting function for the bounce column display
+//purpose is to initlize all the variables and gameboard for bounce column
+void setup_column(){
+  clear_gameBoard();
+  bounce_column_setup_gameBoard();
+  bounce_column_old_c = 0;
+  bounce_column_new_c = 0;
+  bounce_column_old_r = 0;
+  bounce_column_new_r = 0;
+  bounce_column_state = 1;
+}
+
+//supporting function for the bounce column display
+//purpose is to initilize all the starting leds that are on
+void bounce_column_setup_gameBoard(){
+  cli();
+    gameBoard[0] = 1;
+  sei();
+}
+
+//supporting function for the bounce column display
 //starts with only displaying the first row and increases in size each time
 void increase_column(){
   for(int i = 0; i < ROW * COLUMN; i++)
     tempBoard[i] = gameBoard[i];
   
-  new_c = old_c + 1;
-  if(new_c >= COLUMN){
-    new_c = 0;
-    new_r = old_r + 1;
-    if(new_r >= ROW)
-      new_r = 0;
-      tempBoard[35]  = 0;
-      tempBoard[71]  = 0;
-      tempBoard[107] = 0;
-      tempBoard[143] = 0;
-      tempBoard[179] = 0;
-      tempBoard[215] = 0;
+  bounce_column_new_c = bounce_column_old_c + 1;
+  if(bounce_column_new_c >= COLUMN){
+    bounce_column_new_c = 0;
+    bounce_column_new_r = bounce_column_old_r + 1;
+    if(bounce_column_new_r >= ROW)
+      bounce_column_new_r = 0;
   }
 
-  for(int i = 0; i <= new_r; i++){
-    tempBoard[i*COLUMN + old_c] = 0;
-    tempBoard[i*COLUMN + new_c] = 1;
+  for(int i = 0; i <= bounce_column_new_r; i++){
+    tempBoard[i*COLUMN + bounce_column_old_c] = 0;
+    tempBoard[i*COLUMN + bounce_column_new_c] = 1;
   }
 
-  if(old_c == COLUMN - 1 && old_r == ROW - 1){
-    dir = 1;
-    old_c = COLUMN - 1;
-    old_r = ROW - 1;
-    new_r = ROW - 1;
+  if(bounce_column_old_c == COLUMN - 2 && bounce_column_old_r == ROW - 1){
+    bounce_column_state = 2;
+    bounce_column_old_c = COLUMN - 1;
+    bounce_column_old_r = ROW - 1;
+    bounce_column_new_r = ROW - 1;
     tempBoard[0] = 0;
   } else {
-    old_c = new_c;
-    old_r = new_r;
+    bounce_column_old_c = bounce_column_new_c;
+    bounce_column_old_r = bounce_column_new_r;
   }
   
   cli();
@@ -139,30 +185,34 @@ void increase_column(){
   
 }
 
-//starts with only displaying the first row and increases in size each time
+////supporting function for the bounce column display
+//starts with displaying row and decreases in size each time
 void decrease_column(){
   for(int i = 0; i < ROW * COLUMN; i++)
     tempBoard[i] = gameBoard[i];
   
-  new_c = old_c - 1;
-  if(new_c < 0){
-    new_c =  COLUMN - 1;
-    tempBoard[old_r * COLUMN] = 0;
-    new_r = old_r - 1;
+  bounce_column_new_c = bounce_column_old_c - 1;
+  if(bounce_column_new_c < 0){
+    bounce_column_new_c =  COLUMN - 1;
+    tempBoard[bounce_column_old_r * COLUMN] = 0;
+    bounce_column_new_r = bounce_column_old_r - 1;
   }
 
-  for(int i = 0; i <= new_r; i++){
-    tempBoard[i*COLUMN + old_c] = 0;
-    tempBoard[i*COLUMN + new_c] = 1;
+  for(int i = 0; i <= bounce_column_new_r; i++){
+    tempBoard[i*COLUMN + bounce_column_old_c] = 0;
+    tempBoard[i*COLUMN + bounce_column_new_c] = 1;
   }
 
-  if(new_r == 0 && new_c == 0){
-    dir = 0;
-    new_c = 0;
-    new_r = 0;
+  if(bounce_column_new_r == 0 && bounce_column_new_c == 0){
+    bounce_column_state = 1;
+    bounce_column_new_c = 0;
+    bounce_column_new_r = 0;
+    bounce_column_old_c = 0;
+    bounce_column_old_r = 0;
+    tempBoard[0] = 1;
   } else {
-    old_c = new_c;
-    old_r = new_r; 
+    bounce_column_old_c = bounce_column_new_c;
+    bounce_column_old_r = bounce_column_new_r; 
   }
   
   cli();
@@ -170,7 +220,6 @@ void decrease_column(){
       gameBoard[i] = tempBoard[i];
   sei();
 }
-
 
 void loop(){
   
