@@ -63,15 +63,13 @@ cli();
     digitalWrite(column[i], LOW);
   }
   for(i = 0; i < ROW * COLUMN; i++)
-  gameBoard[i] = 0;
-  
-  
+    gameBoard[i] = 0;
   gameBoard[0] = 1;
   Serial.begin(9600);
   old_c = 0;
   new_c = 0;
-  old_r = 0;
-  new_r = 0;
+  old_r = 5;
+  new_r = 5;
   dir = 0;
 sei();
 }
@@ -93,33 +91,10 @@ ISR(TIMER0_COMPA_vect){
 
 //interrupt 1: used for updating the board
 ISR(TIMER1_COMPA_vect){
-  if(dir == 0)
+ if(dir == 0)
     increase_column();
   else if(dir == 1)
     decrease_column();
-}
-
-
-//move_column functions exactly the same as column1, but is called completly through interrupts
-void move_column(){
-  for(int i = 0; i < ROW * COLUMN; i++)
-    tempBoard[i] = gameBoard[i];
-  
-  new_c = old_c + 1;
-  if(new_c >= COLUMN)
-    new_c = 0;  
-  
-  for(int i = 0; i < ROW; i++){
-    tempBoard[i*COLUMN + old_c] = 0;
-    tempBoard[i*COLUMN + new_c] = 1;
-  }
-  
-  old_c = new_c;
-  
-  cli();
-    for(int i = 0; i < ROW * COLUMN; i++)
-      gameBoard[i] = tempBoard[i];
-  sei();
 }
 
 //starts with only displaying the first row and increases in size each time
@@ -150,9 +125,11 @@ void increase_column(){
     dir = 1;
     old_c = COLUMN - 1;
     old_r = ROW - 1;
+    new_r = ROW - 1;
+    tempBoard[0] = 0;
   } else {
-  old_c = new_c;
-  old_r = new_r;
+    old_c = new_c;
+    old_r = new_r;
   }
   
   cli();
@@ -170,6 +147,7 @@ void decrease_column(){
   new_c = old_c - 1;
   if(new_c < 0){
     new_c =  COLUMN - 1;
+    tempBoard[old_r * COLUMN] = 0;
     new_r = old_r - 1;
   }
 
@@ -179,7 +157,7 @@ void decrease_column(){
   }
 
   if(new_r == 0 && new_c == 0){
-    dir == 0;
+    dir = 0;
     new_c = 0;
     new_r = 0;
   } else {
