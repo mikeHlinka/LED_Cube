@@ -20,6 +20,7 @@ int old_c;
 int new_c;
 int old_r;
 int new_r;
+volatile int dir;
 
 void setup(){
 //code from Anada Ghassaei
@@ -71,6 +72,7 @@ cli();
   new_c = 0;
   old_r = 0;
   new_r = 0;
+  dir = 0;
 sei();
 }
 
@@ -91,7 +93,10 @@ ISR(TIMER0_COMPA_vect){
 
 //interrupt 1: used for updating the board
 ISR(TIMER1_COMPA_vect){
- increase_column();
+  if(dir == 0)
+    increase_column();
+  else if(dir == 1)
+    decrease_column();
 }
 
 
@@ -135,22 +140,59 @@ void increase_column(){
       tempBoard[179] = 0;
       tempBoard[215] = 0;
   }
-  
 
   for(int i = 0; i <= new_r; i++){
     tempBoard[i*COLUMN + old_c] = 0;
     tempBoard[i*COLUMN + new_c] = 1;
   }
 
+  if(old_c == COLUMN - 1 && old_r == ROW - 1){
+    dir = 1;
+    old_c = COLUMN - 1;
+    old_r = ROW - 1;
+  } else {
   old_c = new_c;
   old_r = new_r;
-
+  }
+  
   cli();
     for(int i = 0; i < ROW * COLUMN; i++)
       gameBoard[i] = tempBoard[i];
   sei();
   
 }
+
+//starts with only displaying the first row and increases in size each time
+void decrease_column(){
+  for(int i = 0; i < ROW * COLUMN; i++)
+    tempBoard[i] = gameBoard[i];
+  
+  new_c = old_c - 1;
+  if(new_c < 0){
+    new_c =  COLUMN - 1;
+    new_r = old_r - 1;
+  }
+
+  for(int i = 0; i <= new_r; i++){
+    tempBoard[i*COLUMN + old_c] = 0;
+    tempBoard[i*COLUMN + new_c] = 1;
+  }
+
+  if(new_r == 0 && new_c == 0){
+    dir == 0;
+    new_c = 0;
+    new_r = 0;
+  } else {
+    old_c = new_c;
+    old_r = new_r; 
+  }
+  
+  cli();
+    for(int i = 0; i < ROW * COLUMN; i++)
+      gameBoard[i] = tempBoard[i];
+  sei();
+}
+
 
 void loop(){
   
