@@ -19,6 +19,7 @@ int column[36] = {13, 12, 11, 10,  9, 8,
 
 volatile int gameBoard[ROW * COLUMN];
 volatile int tempBoard[ROW * COLUMN];
+volatile int state_var;
 
 void setup(){
 //code from Anada Ghassaei
@@ -85,7 +86,7 @@ ISR(TIMER0_COMPA_vect){
 
 //interrupt 1: used for updating the current display
 ISR(TIMER1_COMPA_vect){
- 
+ main_function();
 }
 
 //generic supporting function
@@ -112,7 +113,7 @@ void clear_gameBoard(){
 void main_function(){
   switch(state_var){
     case 0:
-      setup_funtion();
+      setup_function();
       break;
     case 1:
       first_function();
@@ -139,7 +140,10 @@ void function_setup_gameBoard(){
   sei();
 }
 
-
+//first function that actually effects gameBoard
+void first_function(){
+  
+}
 
 
 
