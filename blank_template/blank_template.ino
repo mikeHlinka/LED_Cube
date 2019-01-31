@@ -108,6 +108,24 @@ void clear_gameBoard(){
   sei();
 }
 
+//generic debugging function
+//outputs the current gameboard to the serial monitor
+void print_gameboard(){
+  cli();
+  for(int z = 0; z < ROW; z++){
+    for(int y = 0; y < ROW; y++){
+      for(int x = 0; x < ROW; x++){
+        Serial.print(gameBoard[z*COLUMN + y*ROW + x]);
+      }
+      Serial.println("\t");
+    }
+    Serial.println("\t");
+  }
+  Serial.println("\t");
+  Serial.println("\t");
+  sei();
+}
+
 //main control function for the bounce control display
 //this fucntion is called whenever a gameboard needs to be updated
 void main_function(){

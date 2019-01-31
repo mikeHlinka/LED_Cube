@@ -14,13 +14,14 @@ int column[36] = {13, 12, 11, 10,  9, 8,
                   23, 25, 27, 29, 31, 33,
                   36, 38, 40, 42, 44, 46}; 
 
-volatile int gameBoard[ROW * COLUMN];
+int gameBoard[ROW * COLUMN];
 volatile int tempBoard[ROW * COLUMN];
 int bounce_column_old_c;
 int bounce_column_new_c;
 int bounce_column_old_r;
 int bounce_column_new_r;
 volatile int bounce_column_state;
+int wait_var = 0;
 
 void setup(){
 //code from Anada Ghassaei
@@ -74,7 +75,7 @@ int inter0_r;
 int inter0_c;
 int inter0_hold;
 //interrupt 0: used for diplsying the board
-ISR(TIMER0_COMPA_vect){
+ISR(TIMER0_COMPA_vect){ 
   for(inter0_r = 0; inter0_r < ROW; inter0_r++){
     digitalWrite(row[inter0_r], 0);
     inter0_hold = inter0_r * COLUMN;
@@ -138,6 +139,23 @@ void setup_column(){
   bounce_column_old_r = 0;
   bounce_column_new_r = 0;
   bounce_column_state = 1;
+  //print_gameboard();
+}
+
+void print_gameboard(){
+  cli();
+  for(int z = 0; z < ROW; z++){
+    for(int y = 0; y < ROW; y++){
+      for(int x = 0; x < ROW; x++){
+        Serial.print(gameBoard[z*COLUMN + y*ROW + x]);
+      }
+      Serial.println("\t");
+    }
+    Serial.println("\t");
+  }
+  Serial.println("\t");
+  Serial.println("\t");
+  sei();
 }
 
 //supporting function for the bounce column display
@@ -221,6 +239,6 @@ void decrease_column(){
   sei();
 }
 
-void loop(){
+void loop(){  
   
 }
