@@ -76,17 +76,15 @@ sei();
 int inter0_r;
 int inter0_c;
 int inter0_hold;
-int on_vec[COLUMN];
-int on_num;
+int inter0_var;
 //interrupt 0: used for diplsying the board
 ISR(TIMER0_COMPA_vect){
   for(inter0_r = 0; inter0_r < ROW; inter0_r++){
     digitalWrite(row[inter0_r], 0);
     inter0_hold = inter0_r * COLUMN;
-    on_num = 0;
     for(inter0_c = 0; inter0_c < COLUMN; inter0_c++){
       if(gameBoard[inter0_hold + inter0_c])
-        for(on_num = 0; on_num < 5; on_num++)
+        for(inter0_var = 0; inter0_var < 5; inter0_var++)
           digitalWrite(column[inter0_c], 1);
       digitalWrite(column[inter0_c], 0);
       

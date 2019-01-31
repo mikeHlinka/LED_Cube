@@ -72,14 +72,19 @@ sei();
 int inter0_r;
 int inter0_c;
 int inter0_hold;
+int inter0_var;
 //interrupt 0: used for diplsying the board
 ISR(TIMER0_COMPA_vect){
   for(inter0_r = 0; inter0_r < ROW; inter0_r++){
     digitalWrite(row[inter0_r], 0);
     inter0_hold = inter0_r * COLUMN;
-    for(inter0_c = 0; inter0_c < COLUMN; inter0_c++)
-      digitalWrite(column[inter0_c], gameBoard[inter0_hold + inter0_c]);
-    delay(1);
+    for(inter0_c = 0; inter0_c < COLUMN; inter0_c++){
+      if(gameBoard[inter0_hold + inter0_c])
+        for(inter0_var = 0; inter0_var < 5; inter0_var++)
+          digitalWrite(column[inter0_c], 1);
+      digitalWrite(column[inter0_c], 0);
+      
+    }
     digitalWrite(row[inter0_r], 1);
   }
 }
