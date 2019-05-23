@@ -119,11 +119,11 @@ cli();
   }
   for(i = 0; i < ROW * COLUMN; i++)
     gameBoard[i] = 0;
-    
+  pinMode(19, OUTPUT);
   attachInterrupt(digitalPinToInterrupt(18), ISR0, RISING);
   attachInterrupt(digitalPinToInterrupt(19), ISR1, RISING);
-  attachInterrupt(digitalPinToInterrupt(3), ISR2, RISING);
-  attachInterrupt(digitalPinToInterrupt(2), ISR3, RISING);
+  attachInterrupt(digitalPinToInterrupt(2), ISR2, RISING);
+  attachInterrupt(digitalPinToInterrupt(21), ISR3, RISING);
 
   Serial.begin(9600);
   randomSeed(analogRead(0));
@@ -205,7 +205,7 @@ void main_function(){
       setup_function();
       break;
     case 1:
-      first_function();
+      //first_function();
       break;
     default:
       game_over();
@@ -217,7 +217,7 @@ void main_function(){
 //purpose is to initlize all the variables and gameboard for
 void setup_function(){
   clear_gameBoard();
-  function_setup_gameBoard();
+  //function_setup_gameBoard();
   state_var = 1;
 }
 
@@ -453,20 +453,49 @@ void updateCurDir(){
 }
 
 
+//solid blue
 void ISR0(){
-  buttonNum = 0;
+  //buttonNum = 0;
+  cli();
+    gameBoard[0] = 1;
+    gameBoard[1] = 0;
+    gameBoard[2] = 0;
+    gameBoard[3] = 0;
+  sei();
 }
 
+//striped blue
 void ISR1(){
-  buttonNum = 1;
+  //buttonNum = 1;
+  cli();
+    
+    gameBoard[0] = 0;
+    gameBoard[1] = 1;
+    gameBoard[2] = 0;
+    gameBoard[3] = 0;
+  sei();
 }
 
+//striped orange
 void ISR2(){
-  buttonNum = 2;
+  //buttonNum = 2;
+  cli();
+    gameBoard[0] = 0;
+    gameBoard[1] = 0;
+    gameBoard[2] = 1;
+    gameBoard[3] = 0;
+  sei();
 }
 
+//solid orange
 void ISR3(){
-  buttonNum = 3;
+  //buttonNum = 3;
+  cli();
+    gameBoard[0] = 0;
+    gameBoard[1] = 0;
+    gameBoard[2] = 0;
+    gameBoard[3] = 1;
+  sei();
 }
 
 

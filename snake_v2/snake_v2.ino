@@ -118,10 +118,10 @@ cli();
   for(i = 0; i < ROW * COLUMN; i++)
     gameBoard[i] = 0;
     
-  attachInterrupt(digitalPinToInterrupt(18), ISR0, RISING);
-  attachInterrupt(digitalPinToInterrupt(19), ISR1, RISING);
-  attachInterrupt(digitalPinToInterrupt(3), ISR2, RISING);
-  attachInterrupt(digitalPinToInterrupt(2), ISR3, RISING);
+  attachInterrupt(digitalPinToInterrupt(3), ISR0, RISING);  //left
+  attachInterrupt(digitalPinToInterrupt(19), ISR1, RISING); //up
+  attachInterrupt(digitalPinToInterrupt(2), ISR2, RISING);  //down
+  attachInterrupt(digitalPinToInterrupt(18), ISR3, RISING); //right
 
   Serial.begin(9600);
   randomSeed(analogRead(0));
@@ -452,22 +452,28 @@ void updateCurDir(){
 
 
 void ISR0(){
-  buttonNum = 0;
+  cli();
+  gameBoard[1*COLUMN + 1*ROW + 1] = 1;
+  sei();
 }
 
 void ISR1(){
-  buttonNum = 1;
+  cli();
+  gameBoard[2*COLUMN + 2*ROW + 2] = 1;
+  sei();
 }
 
 void ISR2(){
-  buttonNum = 2;
+  cli();
+  gameBoard[3*COLUMN + 3*ROW + 3] = 1;
+  sei();
 }
 
 void ISR3(){
-  buttonNum = 3;
+  cli();
+  gameBoard[3*COLUMN + 3*ROW + 3] = 1;
+  sei();
 }
-
-
 
 
 
