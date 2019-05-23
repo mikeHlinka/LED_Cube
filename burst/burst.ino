@@ -5,6 +5,7 @@
 //this display is meant to pick a random point on the cube
 //and light up touching leds going outward
 
+/*
 #define COLUMN  36
 #define ROW     6
 
@@ -15,7 +16,20 @@ int column[36] = {13, 12, 11, 10,  9, 8,
                   22, 24, 26, 28, 30, 32,
                   23, 25, 27, 29, 31, 33,
                   36, 38, 40, 42, 44, 46}; 
+*/
 
+#define COLUMN  49
+#define ROW     7
+
+int row[ROW] = {36, 38, 40, 42, 44, 46, 48};
+
+int column[COLUMN] = {A11, A10,  A9,  A8, A14, A13, A12,
+                       51,  49,  47,  45,  43,  41,  39,
+                       37,  35,  33,  31,  29,  27,  25,
+                       34,  32,  30,  28,  26,  24,  22,
+                       21,  19,  18,  17,  16,  15,  14,
+                       52,  50,   2,   3,   4,   5,   6,
+                        7,   8,   9,  10,  11,  12,  13}; 
 volatile int gameBoard[ROW * COLUMN];
 volatile int tempBoard[ROW * COLUMN];
 volatile int state_var;
@@ -194,9 +208,9 @@ void setup_function(){
 }
 
 void gen_ran_point(){
-    center_point[0] = random(6);
-    center_point[1] = random(6);
-    center_point[2] = random(6);
+    center_point[0] = random(ROW);
+    center_point[1] = random(ROW);
+    center_point[2] = random(ROW);
 }
 
 //supporting function for setup function
