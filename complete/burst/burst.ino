@@ -21,15 +21,16 @@ int column[36] = {13, 12, 11, 10,  9, 8,
 #define COLUMN  49
 #define ROW     7
 
-int row[ROW] = {36, 38, 40, 42, 44, 46, 48};
 
-int column[COLUMN] = {A11, A10,  A9,  A8, A14, A13, A12,
-                       51,  49,  47,  45,  43,  41,  39,
-                       37,  35,  33,  31,  29,  27,  25,
-                       34,  32,  30,  28,  26,  24,  22,
-                       21,  19,  18,  17,  16,  15,  14,
-                       52,  50,   2,   3,   4,   5,   6,
-                        7,   8,   9,  10,  11,  12,  13}; 
+int column[COLUMN] = {13,   12,  11,  10,   9,   8,  7,
+                       6,    5,   4,  14,  15,  16, 17,
+                      22,   24,  26,  28,  30,  32, 34,
+                      38,   40,  42,  44,  46,  48, 50,
+                      39,   41,  43,  45,  47,  49, 51,
+                      A15, A14, A13, A12, A11, A10, A9,
+                      A1,   A2,  A3,  A4,  A5,  A6, A7};
+
+int row[ROW] = {23,25,27,29,31,33,35};
 volatile int gameBoard[ROW * COLUMN];
 volatile int tempBoard[ROW * COLUMN];
 volatile int state_var;
@@ -98,19 +99,16 @@ ISR(TIMER0_COMPA_vect){
     inter0_hold = inter0_r * COLUMN;
     for(inter0_c = 0; inter0_c < COLUMN; inter0_c++){
       if(gameBoard[inter0_hold + inter0_c])
-        for(inter0_var = 0; inter0_var < 5; inter0_var++)
+        for(inter0_var = 0; inter0_var < 8; inter0_var++)
           digitalWrite(column[inter0_c], 1);
       digitalWrite(column[inter0_c], 0);
       
     }
     digitalWrite(row[inter0_r], 1);
   }
+  
 }
 
-//interrupt 1: used for updating the current display
-ISR(TIMER1_COMPA_vect){
- main_function();
-}
 
 //generic supporting function
 //will set entire gameBoard to 1 (on)
@@ -149,45 +147,50 @@ void print_gameBoard(){
   sei();
 }
 
+//interrupt 1: used for updating the current display
+ISR(TIMER1_COMPA_vect){
+ main_burst();
+}
+
 //main control function for the bounce control display
 //this fucntion is called whenever a gameboard needs to be updated
-void main_function(){
+void main_burst(){
   switch(state_var){
     case 0:
-      setup_function();
+      setup_burst_variables();
       break;
     case 1:
-      wait();
+      burst_wait();
       break;
     case 2:
-      expand1();
+      burst_expand1();
       break;
     case 3:
-      wait();
+      burst_wait();
       break;
     case 4:
-      expand2();
+      burst_expand2();
       break;
     case 5:
-      wait();
+      burst_wait();
       break;
     case 6:
-      collapse2();
+      burst_collapse2();
       break;
     case 7:
-      wait();
+      burst_wait();
       break;
     case 8:
-      collapse1();
+      burst_collapse1();
       break;
     case 9:
-      wait();
+      burst_wait();
       break;
     case 10:
-      collapse0();
+      burst_collapse0();
       break;
     case 11:
-      wait();
+      burst_wait();
       break;
     case 12:
       state_var = 0;
@@ -200,9 +203,9 @@ void main_function(){
 
 //supporting function 
 //purpose is to initlize all the variables and gameboard for
-void setup_function(){
+void setup_burst_variables(){
   clear_gameBoard();
-  function_setup_gameBoard();
+  burst_setup_gameBoard();
   state_var = 1;
   waitVar = 4;
 }
@@ -215,19 +218,19 @@ void gen_ran_point(){
 
 //supporting function for setup function
 //purpose is to initilize all the starting leds (on) for the gameBoard
-void function_setup_gameBoard(){
+void burst_setup_gameBoard(){
   cli();
     gen_ran_point();
     gameBoard[center_point[2]*COLUMN + center_point[1]*ROW + center_point[0]] = 1;
   sei();
 }
 
-void wait(){
+void burst_wait(){
     state_var++;
 }
 
 //first function that actually effects gameBoard
-void expand1(){
+void burst_expand1(){
    
   for(int z = center_point[2] - 1; z <= center_point[2] + 1; z++){
     for(int y = center_point[1] - 1; y <= center_point[1] + 1; y++){
@@ -246,7 +249,7 @@ void expand1(){
   state_var++;
 }
 
-void expand2(){
+void burst_expand2(){
    
   for(int z = center_point[2] - 2; z <= center_point[2] + 2; z++){
     for(int y = center_point[1] - 2; y <= center_point[1] + 2; y++){
@@ -264,7 +267,7 @@ void expand2(){
   state_var++;
 }
 
-void collapse2(){
+void burst_collapse2(){
    
   for(int z = center_point[2] - 2; z <= center_point[2] + 2; z++){
     for(int y = center_point[1] - 2; y <= center_point[1] + 2; y++){
@@ -292,7 +295,7 @@ void collapse2(){
   state_var++;
 }
 
-void collapse1(){
+void burst_collapse1(){
    
   for(int z = center_point[2] - 1; z <= center_point[2] + 1; z++){
     for(int y = center_point[1] - 1; y <= center_point[1] + 1; y++){
@@ -313,7 +316,7 @@ void collapse1(){
   state_var++;
 }
 
-void collapse0(){
+void burst_collapse0(){
   tempBoard[center_point[2]*COLUMN + center_point[1]*ROW + center_point[0]] = 0;
   cli();
     for(int i = 0; i < ROW * COLUMN; i++)
