@@ -11,7 +11,7 @@
 #define COLUMN  49
 #define ROW     7
 #define STORAGESIZE 30
-
+/*
 int row[ROW] = {36, 38, 40, 42, 44, 46, 48};
 
 int column[COLUMN] = {A11, A10,  A9,  A8, A14, A13, A12,
@@ -21,6 +21,16 @@ int column[COLUMN] = {A11, A10,  A9,  A8, A14, A13, A12,
                        A7,  A6,  A5,  17,  16,  15,  14,
                        52,  50,   A4,   A3,   4,   5,   6,
                         7,   8,   9,  10,  11,  12,  13}; 
+*/
+int column[COLUMN] = {13,   12,  11,  10,   9,   8,  7,
+                       6,    5,   4,  14,  15,  16, 17,
+                      22,   24,  26,  28,  30,  32, 34,
+                      38,   40,  42,  44,  46,  48, 50,
+                      39,   41,  43,  45,  47,  49, 51,
+                      A15, A14, A13, A12, A11, A10, A9,
+                      A1,   A2,  A3,  A4,  A5,  A6, A7};
+
+int row[ROW] = {23,25,27,29,31,33,35};
 
 /*
  * the input buttons are: left  ==> 18   working
@@ -137,7 +147,6 @@ int inter0_hold;
 int inter0_var;
 //interrupt 0: used for diplsying the board
 ISR(TIMER0_COMPA_vect){
-  
   for(inter0_r = 0; inter0_r < ROW; inter0_r++){
     digitalWrite(row[inter0_r], 0);
     inter0_hold = inter0_r * COLUMN;

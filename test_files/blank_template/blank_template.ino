@@ -6,16 +6,17 @@
 //it is meant for being able to start on a new display without having to worry
 //or deal with mixed variable names and loosing yourself within the code
 
-#define COLUMN  36
-#define ROW     6
+#define COLUMN  49
+#define ROW     7
 
-int row[6] = {47, 45, 43, 41, 39, 37};
-int column[36] = {13, 12, 11, 10,  9, 8,
-                   7,  6,  5,  4,  3, 2,
-                  14, 15, 16, 17, 18, 19,
-                  22, 24, 26, 28, 30, 32,
-                  23, 25, 27, 29, 31, 33,
-                  36, 38, 40, 42, 44, 46}; 
+int column[COLUMN] = {13,   12,  11,  10,   9,   8,  7,
+                       6,    5,   4,  14,  15,  16, 17,
+                      22,   24,  26,  28,  30,  32, 34,
+                      38,   40,  42,  44,  46,  48, 50,
+                      39,   41,  43,  45,  47,  49, 51,
+                      A15, A14, A13, A12, A11, A10, A9,
+                      A1,   A2,  A3,  A4,  A5,  A6, A7};
+int row[ROW]       = {23,   25,  27,  29,  31,  33, 35};
 
 volatile int gameBoard[ROW * COLUMN];
 volatile int tempBoard[ROW * COLUMN];
@@ -65,7 +66,8 @@ cli();
     gameBoard[i] = 0;
     
   Serial.begin(9600);
-
+  randomSeed(analogRead(0));
+  
 sei();
 }
 
@@ -80,18 +82,13 @@ ISR(TIMER0_COMPA_vect){
     inter0_hold = inter0_r * COLUMN;
     for(inter0_c = 0; inter0_c < COLUMN; inter0_c++){
       if(gameBoard[inter0_hold + inter0_c])
-        for(inter0_var = 0; inter0_var < 5; inter0_var++)
+        for(inter0_var = 0; inter0_var < 8; inter0_var++)
           digitalWrite(column[inter0_c], 1);
       digitalWrite(column[inter0_c], 0);
       
     }
     digitalWrite(row[inter0_r], 1);
   }
-}
-
-//interrupt 1: used for updating the current display
-ISR(TIMER1_COMPA_vect){
- main_function();
 }
 
 //generic supporting function
@@ -129,6 +126,11 @@ void print_gameboard(){
   Serial.println("\t");
   Serial.println("\t");
   sei();
+}
+
+//interrupt 1: used for updating the current display
+ISR(TIMER1_COMPA_vect){
+ main_function();
 }
 
 //main control function for the bounce control display
