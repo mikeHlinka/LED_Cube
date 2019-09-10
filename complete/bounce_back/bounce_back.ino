@@ -185,6 +185,7 @@ void bounceBack_pick_point(){
     bounceBack_dir=COLUMN;
   else
     bounceBack_dir=-COLUMN;
+  bounceBack_ticks=0;
   state_var=2;
 }
 
