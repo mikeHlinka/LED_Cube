@@ -13,8 +13,7 @@ int column[COLUMN] = {13,   12,  11,  10,   9,   8,  7,
                       39,   41,  43,  45,  47,  49, 51,
                       A15, A14, A13, A12, A11, A10, A9,
                       A1,   A2,  A3,  A4,  A5,  A6, A7};
-
-int row[ROW] = {23,25,27,29,31,33,35};
+int row[ROW]       = {23,   25,  27,  29,  31,  33, 35};
 
 int gameBoard[ROW * COLUMN];
 volatile int tempBoard[ROW * COLUMN];
