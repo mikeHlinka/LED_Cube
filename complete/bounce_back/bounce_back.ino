@@ -182,9 +182,12 @@ void bounceBack_setup_gameBoard(){
 void bounceBack_pick_point(){
   bounceBack_point=random(COLUMN);
   if(gameBoard[bounceBack_point])
-    bounceBack_dir=COLUMN;
-  else
-    bounceBack_dir=-COLUMN;
+    bounceBack_dir=1;
+  else{
+    bounceBack_dir=-1;
+    bounceBack_point+=COLUMN*(ROW-1);
+  }
+    
   bounceBack_ticks=0;
   state_var=2;
 }
@@ -192,9 +195,9 @@ void bounceBack_pick_point(){
 void bounceBack_run(){
   if(bounceBack_ticks < ROW-1){
     cli();
-      gameBoard[bounceBack_point + bounceBack_ticks*COLUMN]=0;
+      gameBoard[bounceBack_point + bounceBack_ticks*COLUMN*bounceBack_dir]=0;
       bounceBack_ticks++;
-      gameBoard[bounceBack_point + bounceBack_ticks*COLUMN]=1;
+      gameBoard[bounceBack_point + bounceBack_ticks*COLUMN*bounceBack_dir]=1;
     sei();
   } else {
     state_var=1;
