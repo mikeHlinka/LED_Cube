@@ -8,6 +8,8 @@
 
 #define COLUMN  49
 #define ROW     7
+#define WIDTH   2
+#define WAIT    4
 
 int column[COLUMN] = {13,   12,  11,  10,   9,   8,  7,
                        6,    5,   4,  14,  15,  16, 17,
@@ -19,8 +21,15 @@ int column[COLUMN] = {13,   12,  11,  10,   9,   8,  7,
 int row[ROW]       = {23,   25,  27,  29,  31,  33, 35};
 
 volatile int gameBoard[ROW * COLUMN];
-volatile int tempBoard[ROW * COLUMN];
+int tempBoard[ROW * COLUMN];
 volatile int state_var;
+
+int org_x;
+int org_y;
+int org_z;
+int drop_tick;
+int total_ticks;
+int wait_num;
 
 void setup(){
 //code from Anada Ghassaei
@@ -105,8 +114,9 @@ void game_over(){
 //will clear whatever is stored in the gameBoard
 void clear_gameBoard(){
   cli();
-  for(int i = 0; i < ROW * COLUMN; i++)
+  for(int i = 0; i < ROW * COLUMN; i++){
     gameBoard[i] = 0;
+  }
   sei();
 }
 
@@ -147,7 +157,12 @@ void main_function(){
       setup_function();
       break;
     case 1:
-      first_function();
+      drop_check();
+      break;
+    case 2:
+      drop_wait();
+      break;
+    case 3:
       break;
     default:
       game_over();
@@ -160,23 +175,67 @@ void main_function(){
 void setup_function(){
   clear_gameBoard();
   function_setup_gameBoard();
-  state_var = 1;
+  state_var = 2;
+}
+
+void drop_wait(){
+  if(wait_num < WAIT){
+    wait_num++;
+  } else {
+    wait_num = 0;
+    state_var = 1;
+  }
 }
 
 //supporting function for setup function
 //purpose is to initilize all the starting leds (on) for the gameBoard
 void function_setup_gameBoard(){
+  org_x = 1;
+  org_y = 2;
+  org_z = 3;
+  int temp_point;
+  total_ticks = 7;
+  
+  total_ticks = total_ticks + WIDTH - 1;
+  wait_num = 20;
+  drop_tick = 0;
   cli();
-    
+    gameBoard[org_z*COLUMN + org_y*ROW + org_x] = 1;
   sei();
 }
 
-//first function that actually effects gameBoard
-void first_function(){
-  
+//function to be called during dropping
+//checks if drop needs to spread, or start anew
+void drop_check(){
+  if(drop_tick < total_ticks){
+    drop_tick++;
+    drop_do();
+    state_var = 2;
+  } else {
+    state_var = 0;
+  }
 }
 
+//first function that actually effects gameBoard
+void drop_do(){
+  int min_distance = drop_tick - WIDTH;
+  int cur_point;
+  cli();
+    for(int x=org_x-WIDTH-drop_tick;x<org_x+WIDTH+drop_tick;x++){
+      for(int y=org_y-WIDTH-drop_tick;y<org_y+WIDTH+drop_tick;y++){
+        for(int z=org_z-WIDTH-drop_tick;z<org_z+WIDTH+drop_tick;z++){
+          if(x >= 0 && x < ROW && y >= 0 && x < ROW && z >= 0 && z < ROW)
+            gameBoard[z*COLUMN + y*ROW + x] = 1;
+        }
+      }
+    }
+  sei();
+}
 
+int get_rad(int x, int y, int z){
+  int temp = max(abs(x-org_x),abs(y-org_y));
+  return max(temp, abs(z-org_z));
+}
 
 
 
