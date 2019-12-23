@@ -193,12 +193,49 @@ void function_setup_gameBoard(){
   org_x = 1;
   org_y = 2;
   org_z = 3;
-  int temp_point;
-  total_ticks = 7;
+  int temp_point, temp_x, temp_y, temp_z;
   
-  total_ticks = total_ticks + WIDTH - 1;
+  total_ticks = COLUMN + WIDTH - 1;
   wait_num = 20;
   drop_tick = 0;
+  //cli();
+  for(int x=0; x < ROW;x++){
+    for(int y=0; y < ROW;y++){
+      for(int z=0; z < ROW;z++){
+        if(x > org_x)
+          temp_x = x - org_x;
+        else
+          temp_x = org_x -x;
+
+        if(y > org_y)
+          temp_y = y - org_y;
+        else
+          temp_y = org_y - y;
+
+        if(z > org_z)
+          temp_z = y - org_z;
+        else
+          temp_z = org_z - z;
+          
+        if (temp_x > temp_y){
+          if (temp_x > temp_z){
+            tempBoard[z*COLUMN + y*ROW + x] = temp_x;
+          } else {
+            tempBoard[z*COLUMN + y*ROW + x] = temp_z;
+          }
+        } else {
+          if (temp_y > temp_z){
+            tempBoard[z*COLUMN + y*ROW + x] = temp_y;
+          } else {
+            tempBoard[z*COLUMN + y*ROW + x] = temp_z;
+          }
+        }
+
+        
+      }
+    }
+  }
+  //sei();
   cli();
     gameBoard[org_z*COLUMN + org_y*ROW + org_x] = 1;
   sei();
@@ -221,21 +258,50 @@ void drop_do(){
   int min_distance = drop_tick - WIDTH;
   int cur_point;
   cli();
-    for(int x=org_x-WIDTH-drop_tick;x<org_x+WIDTH+drop_tick;x++){
-      for(int y=org_y-WIDTH-drop_tick;y<org_y+WIDTH+drop_tick;y++){
-        for(int z=org_z-WIDTH-drop_tick;z<org_z+WIDTH+drop_tick;z++){
-          if(x >= 0 && x < ROW && y >= 0 && x < ROW && z >= 0 && z < ROW)
-            gameBoard[z*COLUMN + y*ROW + x] = 1;
+    for(int x=0; x < ROW;x++){
+      for(int y=0; y < ROW;y++){
+        for(int z=0; z < ROW;z++){
+          cur_point = tempBoard[z*COLUMN + y*ROW + x];
+          if(x > org_x)
+            temp_x = x - org_x;
+          else
+            temp_x = org_x -x;
+
+          if(y > org_y)
+            temp_y = y - org_y;
+          else
+            temp_y = org_y - y;
+
+          if(z > org_z)
+            temp_z = y - org_z;
+          else
+            temp_z = org_z - z;
+          
+          if (temp_x > temp_y){
+            if (temp_x > temp_z){
+              if(cur_point >= min_distance && cur_point < drop_tick)
+              //tempBoard[z*COLUMN + y*ROW + x] = 1;
+            } else {
+              tempBoard[z*COLUMN + y*ROW + x] = temp_z;
+            }
+          } else {
+            if (temp_y > temp_z){
+              tempBoard[z*COLUMN + y*ROW + x] = temp_y;
+            } else {
+              tempBoard[z*COLUMN + y*ROW + x] = temp_z;
+            }
+          }
         }
       }
     }
   sei();
+
+  cli();
+    for(int i = 0; i < WIDTH * COLUMN;i++)
+      gameBoard[i] = tempBoard[i];
+  sei();
 }
 
-int get_rad(int x, int y, int z){
-  int temp = max(abs(x-org_x),abs(y-org_y));
-  return max(temp, abs(z-org_z));
-}
 
 
 
