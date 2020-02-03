@@ -130,7 +130,7 @@ void print_gameboard(){
 
 //interrupt 1: used for updating the current display
 ISR(TIMER1_COMPA_vect){
- bouncBack_main();
+ bounceBack_main();
 }
 
 int bounceBack_ticks;
@@ -139,10 +139,10 @@ int bounceBack_dir;
 
 //main control function for the bounce control display
 //this fucntion is called whenever a gameboard needs to be updated
-void bouncBack_main(){
+void bounceBack_main(){
   switch(state_var){
     case 0:
-      setup_function();
+      bounceBack_setup_function();
       break;
     case 1:
       bounceBack_pick_point();
@@ -158,7 +158,7 @@ void bouncBack_main(){
 
 //supporting function 
 //purpose is to initlize all the variables and gameboard for
-void setup_function(){
+void bounceBack_setup_function(){
   clear_gameBoard();
   bounceBack_ticks=0;
   bounceBack_setup_gameBoard();

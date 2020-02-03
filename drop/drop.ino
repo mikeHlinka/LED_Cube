@@ -116,19 +116,22 @@ void clear_gameBoard(){
   cli();
   for(int i = 0; i < ROW * COLUMN; i++){
     gameBoard[i] = 0;
+    tempBoard[i] = 0;
   }
   sei();
 }
 
 //will clear the temp board
 void clear_tempBoard(){
+  cli();
   for(int i = 0; i < ROW * COLUMN; i++)
     tempBoard[i] = 0;
+  sei();
 }
 
 //generic debugging function
 //outputs the current gameboard to the serial monitor
-void print_gameboard(){
+void print_gameBoard(){
   cli();
   for(int z = 0; z < ROW; z++){
     for(int y = 0; y < ROW; y++){
@@ -152,9 +155,15 @@ ISR(TIMER1_COMPA_vect){
 //main control function for the bounce control display
 //this fucntion is called whenever a gameboard needs to be updated
 void main_function(){
+  
+ cli();
+  Serial.println(state_var);
+ sei();
   switch(state_var){
     case 0:
-      setup_function();
+      drop_setup();
+      print_gameBoard();
+      while(1);
       break;
     case 1:
       drop_check();
@@ -172,10 +181,34 @@ void main_function(){
 
 //supporting function 
 //purpose is to initlize all the variables and gameboard for
-void setup_function(){
+void drop_setup(){
   clear_gameBoard();
   function_setup_gameBoard();
   state_var = 2;
+}
+
+//supporting function for setup function
+//purpose is to initilize all the starting leds (on) for the gameBoard
+void function_setup_gameBoard(){
+  org_x = 1;
+  org_y = 2;
+  org_z = 3;
+  int cur_point;
+    
+  total_ticks = COLUMN + WIDTH - 1;
+  wait_num = 20;
+  drop_tick = 0;
+  sei();
+  for(int x=0; x < ROW;x++){
+    for(int y=0; y < ROW;y++){
+      for(int z=0; z < ROW;z++){
+        cur_point = z*COLUMN + y*ROW + x;
+        gameBoard[cur_point] = return_max_dist(x, y, z);
+        
+      }
+    }
+  }
+  cli();
 }
 
 void drop_wait(){
@@ -185,60 +218,6 @@ void drop_wait(){
     wait_num = 0;
     state_var = 1;
   }
-}
-
-//supporting function for setup function
-//purpose is to initilize all the starting leds (on) for the gameBoard
-void function_setup_gameBoard(){
-  org_x = 1;
-  org_y = 2;
-  org_z = 3;
-  int temp_point, temp_x, temp_y, temp_z;
-  
-  total_ticks = COLUMN + WIDTH - 1;
-  wait_num = 20;
-  drop_tick = 0;
-  //cli();
-  for(int x=0; x < ROW;x++){
-    for(int y=0; y < ROW;y++){
-      for(int z=0; z < ROW;z++){
-        if(x > org_x)
-          temp_x = x - org_x;
-        else
-          temp_x = org_x -x;
-
-        if(y > org_y)
-          temp_y = y - org_y;
-        else
-          temp_y = org_y - y;
-
-        if(z > org_z)
-          temp_z = y - org_z;
-        else
-          temp_z = org_z - z;
-          
-        if (temp_x > temp_y){
-          if (temp_x > temp_z){
-            tempBoard[z*COLUMN + y*ROW + x] = temp_x;
-          } else {
-            tempBoard[z*COLUMN + y*ROW + x] = temp_z;
-          }
-        } else {
-          if (temp_y > temp_z){
-            tempBoard[z*COLUMN + y*ROW + x] = temp_y;
-          } else {
-            tempBoard[z*COLUMN + y*ROW + x] = temp_z;
-          }
-        }
-
-        
-      }
-    }
-  }
-  //sei();
-  cli();
-    gameBoard[org_z*COLUMN + org_y*ROW + org_x] = 1;
-  sei();
 }
 
 //function to be called during dropping
@@ -254,54 +233,55 @@ void drop_check(){
 }
 
 //first function that actually effects gameBoard
+//will expand the radius by 1 every tick
 void drop_do(){
-  int min_distance = drop_tick - WIDTH;
-  int cur_point;
+  int max_point, cur_point;
   cli();
-    for(int x=0; x < ROW;x++){
-      for(int y=0; y < ROW;y++){
-        for(int z=0; z < ROW;z++){
-          cur_point = tempBoard[z*COLUMN + y*ROW + x];
-          if(x > org_x)
-            temp_x = x - org_x;
+    for(int x=0; x<ROW; x++){
+      for(int y=0; y<ROW; y++){
+        for(int z=0; z<ROW; z++){
+          cur_point = z*COLUMN + y*ROW + x;
+          max_point = tempBoard[cur_point];
+          if(x < max_point && y < max_point && z < max_point)
+            gameBoard[cur_point] = 1;
           else
-            temp_x = org_x -x;
-
-          if(y > org_y)
-            temp_y = y - org_y;
-          else
-            temp_y = org_y - y;
-
-          if(z > org_z)
-            temp_z = y - org_z;
-          else
-            temp_z = org_z - z;
-          
-          if (temp_x > temp_y){
-            if (temp_x > temp_z){
-              if(cur_point >= min_distance && cur_point < drop_tick)
-              //tempBoard[z*COLUMN + y*ROW + x] = 1;
-            } else {
-              tempBoard[z*COLUMN + y*ROW + x] = temp_z;
-            }
-          } else {
-            if (temp_y > temp_z){
-              tempBoard[z*COLUMN + y*ROW + x] = temp_y;
-            } else {
-              tempBoard[z*COLUMN + y*ROW + x] = temp_z;
-            }
-          }
+            gameBoard[cur_point] = 0;
         }
       }
     }
   sei();
-
-  cli();
-    for(int i = 0; i < WIDTH * COLUMN;i++)
-      gameBoard[i] = tempBoard[i];
-  sei();
 }
 
+//custom max distance function
+//hopefully will fix my issues
+int return_max_dist(int x, int y, int z){
+  int tx, ty, tz;
+  if(x > org_x)
+    tx = x - org_x;
+  else
+    tx = org_x -x;
+
+  if(y > org_y)
+    ty = y - org_y;
+  else
+    ty = org_y - y;
+
+  if(z > org_z)
+    tz = y - org_z;
+  else
+    tz = org_z - z;
+          
+  if(tx > ty)
+    if(tx > tz)
+      return tx;
+    else
+      return tz;
+  else
+    if(ty > tz)
+      return ty;
+    else
+      return tz;
+}
 
 
 

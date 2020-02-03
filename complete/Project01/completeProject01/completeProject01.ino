@@ -21,6 +21,8 @@ int row[ROW]       = {23,   25,  27,  29,  31,  33, 35};
 volatile int gameBoard[ROW * COLUMN];
 volatile int tempBoard[ROW * COLUMN];
 volatile int state_var;
+volatile int main_function;
+int bounce_column_state;
 
 void setup(){
 //code from Anada Ghassaei
@@ -64,7 +66,7 @@ cli();
   }
   for(i = 0; i < ROW * COLUMN; i++)
     gameBoard[i] = 0;
-    
+  main_function = 0;
   Serial.begin(9600);
   randomSeed(analogRead(0));
 sei();
@@ -110,28 +112,23 @@ void clear_gameBoard(){
   sei();
 }
 
-//generic debugging function
-//outputs the current gameboard to the serial monitor
-void print_gameboard(){
-  cli();
-  for(int z = 0; z < ROW; z++){
-    for(int y = 0; y < ROW; y++){
-      for(int x = 0; x < ROW; x++){
-        Serial.print(gameBoard[z*COLUMN + y*ROW + x]);
-      }
-      Serial.println("\t");
-    }
-    Serial.println("\t");
-  }
-  Serial.println("\t");
-  Serial.println("\t");
-  sei();
-}
-
 //##############main control function######################
 //interrupt 1: used for updating the current display
 ISR(TIMER1_COMPA_vect){
- burst_main();
+ switch(main_function){
+  case 0:
+    burst_main();
+    break;
+  case 1:
+    bounceBack_main();
+    break;
+  case 2:
+    bounce_column();
+    break;
+  default:
+    game_over();
+    break;
+ }
 }
 
 //##################Burst function#########################
@@ -314,9 +311,199 @@ void burst_collapse0(){
 }
 
 
+//#################Column Bounce Function########################
+//variables
+int bounce_column_old_c;
+int bounce_column_new_c;
+int bounce_column_old_r;
+int bounce_column_new_r;
+
+//main control function for the bounce control display
+//this fucntion is called whenever a gameboard needs to be updated
+void bounce_column(){
+  switch(bounce_column_state){
+    case 0:
+      setup_column();
+      break;
+    case 1:
+      increase_column();
+      break;
+    case 2:
+      decrease_column();
+      break;
+    default:
+      game_over();
+      break;
+  }
+}
+
+//supporting function for the bounce column display
+//purpose is to initlize all the variables and gameboard for bounce column
+void setup_column(){
+  clear_gameBoard();
+  bounce_column_setup_gameBoard();
+  bounce_column_old_c = 0;
+  bounce_column_new_c = 0;
+  bounce_column_old_r = 0;
+  bounce_column_new_r = 0;
+  bounce_column_state = 1;
+}
+
+//supporting function for the bounce column display
+//purpose is to initilize all the starting leds that are on
+void bounce_column_setup_gameBoard(){
+  cli();
+    gameBoard[0] = 1;
+  sei();
+}
+
+//supporting function for the bounce column display
+//starts with only displaying the first row and increases in size each time
+void increase_column(){
+  for(int i = 0; i < ROW * COLUMN; i++)
+    tempBoard[i] = gameBoard[i];
+  
+  bounce_column_new_c = bounce_column_old_c + 1;
+  if(bounce_column_new_c >= COLUMN){
+    bounce_column_new_c = 0;
+    bounce_column_new_r = bounce_column_old_r + 1;
+    if(bounce_column_new_r >= ROW)
+      bounce_column_new_r = 0;
+  }
+
+  for(int i = 0; i <= bounce_column_new_r; i++){
+    tempBoard[i*COLUMN + bounce_column_old_c] = 0;
+    tempBoard[i*COLUMN + bounce_column_new_c] = 1;
+  }
+
+  if(bounce_column_old_c == COLUMN - 2 && bounce_column_old_r == ROW - 1){
+    bounce_column_state = 2;
+    bounce_column_old_c = COLUMN - 1;
+    bounce_column_old_r = ROW - 1;
+    bounce_column_new_r = ROW - 1;
+    tempBoard[0] = 0;
+  } else {
+    bounce_column_old_c = bounce_column_new_c;
+    bounce_column_old_r = bounce_column_new_r;
+  }
+  
+  cli();
+    for(int i = 0; i < ROW * COLUMN; i++)
+      gameBoard[i] = tempBoard[i];
+  sei();
+  
+}
+
+////supporting function for the bounce column display
+//starts with displaying row and decreases in size each time
+void decrease_column(){
+  for(int i = 0; i < ROW * COLUMN; i++)
+    tempBoard[i] = gameBoard[i];
+  
+  bounce_column_new_c = bounce_column_old_c - 1;
+  if(bounce_column_new_c < 0){
+    bounce_column_new_c =  COLUMN - 1;
+    tempBoard[bounce_column_old_r * COLUMN] = 0;
+    bounce_column_new_r = bounce_column_old_r - 1;
+  }
+
+  for(int i = 0; i <= bounce_column_new_r; i++){
+    tempBoard[i*COLUMN + bounce_column_old_c] = 0;
+    tempBoard[i*COLUMN + bounce_column_new_c] = 1;
+  }
+
+  if(bounce_column_new_r == 0 && bounce_column_new_c == 0){
+    bounce_column_state = 1;
+    bounce_column_new_c = 0;
+    bounce_column_new_r = 0;
+    bounce_column_old_c = 0;
+    bounce_column_old_r = 0;
+    tempBoard[0] = 1;
+  } else {
+    bounce_column_old_c = bounce_column_new_c;
+    bounce_column_old_r = bounce_column_new_r; 
+  }
+  
+  cli();
+    for(int i = 0; i < ROW * COLUMN; i++)
+      gameBoard[i] = tempBoard[i];
+  sei();
+}
 
 
+//################Bounce Back Function#########################
+//variables
+int bounceBack_ticks;
+int bounceBack_point;
+int bounceBack_dir;
 
+
+//main control function for the bounce control display
+//this fucntion is called whenever a gameboard needs to be updated
+void bounceBack_main(){
+  switch(state_var){
+    case 0:
+      bounceBack_setup_function();
+      break;
+    case 1:
+      bounceBack_pick_point();
+      break;
+    case 2:
+      bounceBack_run();
+      break;
+    default:
+      game_over();
+      break;
+  }
+}
+
+//supporting function 
+//purpose is to initlize all the variables and gameboard for
+void bounceBack_setup_function(){
+  clear_gameBoard();
+  bounceBack_ticks=0;
+  bounceBack_setup_gameBoard();
+  state_var = 1;
+}
+
+//supporting function for setup function
+//purpose is to initilize all the starting leds (on) for the gameBoard
+void bounceBack_setup_gameBoard(){
+  cli();
+    for(int i=0; i<COLUMN;i++){
+      if(random(2))
+        gameBoard[i]=1;
+      else
+        gameBoard[(ROW-1)*COLUMN+i]=1;
+    }
+  sei();
+}
+
+//first function that actually effects gameBoard
+void bounceBack_pick_point(){
+  bounceBack_point=random(COLUMN);
+  if(gameBoard[bounceBack_point])
+    bounceBack_dir=1;
+  else{
+    bounceBack_dir=-1;
+    bounceBack_point+=COLUMN*(ROW-1);
+  }
+    
+  bounceBack_ticks=0;
+  state_var=2;
+}
+
+void bounceBack_run(){
+  if(bounceBack_ticks < ROW-1){
+    cli();
+      gameBoard[bounceBack_point + bounceBack_ticks*COLUMN*bounceBack_dir]=0;
+      bounceBack_ticks++;
+      gameBoard[bounceBack_point + bounceBack_ticks*COLUMN*bounceBack_dir]=1;
+    sei();
+  } else {
+    state_var=1;
+  }
+}
 
 
 
