@@ -118,10 +118,10 @@ void ISR0(){
 //meant to display a fault or error has occured
 void game_over(){
   cli();
-    Serial.print("main_function:");
-    Serial.println(main_function);
-    Serial.print("state_var:");
-    Serial.println(state_var);
+    //Serial.print("main_function:");
+    //Serial.println(main_function);
+    //Serial.print("state_var:");
+    //Serial.println(state_var);
     for(int i = 0; i < ROW * COLUMN; i++)
       gameBoard[i] = 1;
   sei();
