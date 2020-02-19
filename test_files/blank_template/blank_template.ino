@@ -110,6 +110,12 @@ void clear_gameBoard(){
   sei();
 }
 
+//will clear the temp board
+void clear_tempBoard(){
+  for(int i = 0; i < ROW * COLUMN; i++)
+    tempBoard[i] = 0;
+}
+
 //generic debugging function
 //outputs the current gameboard to the serial monitor
 void print_gameboard(){

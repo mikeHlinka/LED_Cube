@@ -1,31 +1,33 @@
-int button = -1;
 int bitReady = 0;
-long lastTime = 0;
 
-int data1=0;
-int data2=0;
+volatile long newTime;
+volatile long oldTime;
 
 void setup() {
   // put your setup code here, to run once:
   attachInterrupt(digitalPinToInterrupt(19), ISR0, FALLING);
-  pinMode(2,INPUT);
-  pinMode(3,INPUT);
   Serial.begin(9600);
   Serial.println("Ready to begin.");
+  oldTime=millis();
 }
 
 void loop() {
-  if(bitReady){
+  if(bitReady && oldTime + 2000 < newTime){
+    Serial.print("new:");
+    Serial.println(newTime);
+    Serial.print("old:");
+    Serial.println(oldTime);
+    oldTime = newTime;
     bitReady=0;
-    Serial.print("button: ");
-    Serial.print(data1);
-    Serial.println(data2);
+    Serial.println("press");
+    Serial.println(" ");
   }
 }
 
 
 void ISR0(){
-  bitReady = 1;
-  data1=digitalRead(2);
-  data2=digitalRead(3);
+  sei();
+  bitReady=1;
+  newTime=millis();
+  cli();
 }

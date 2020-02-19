@@ -22,7 +22,6 @@ int bounce_column_new_c;
 int bounce_column_old_r;
 int bounce_column_new_r;
 volatile int bounce_column_state;
-int wait_var = 0;
 
 void setup(){
 //code from Anada Ghassaei
@@ -145,23 +144,6 @@ void setup_column(){
   bounce_column_old_r = 0;
   bounce_column_new_r = 0;
   bounce_column_state = 1;
-  //print_gameboard();
-}
-
-void print_gameboard(){
-  cli();
-  for(int z = 0; z < ROW; z++){
-    for(int y = 0; y < ROW; y++){
-      for(int x = 0; x < ROW; x++){
-        Serial.print(gameBoard[z*COLUMN + y*ROW + x]);
-      }
-      Serial.println("\t");
-    }
-    Serial.println("\t");
-  }
-  Serial.println("\t");
-  Serial.println("\t");
-  sei();
 }
 
 //supporting function for the bounce column display

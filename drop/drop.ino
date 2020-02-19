@@ -6,8 +6,10 @@
 //it is meant for being able to start on a new display without having to worry
 //or deal with mixed variable names and loosing yourself within the code
 
-#define COLUMN        49
-#define ROW           7
+#define COLUMN  49
+#define ROW     7
+#define WIDTH   2
+#define WAIT    4
 
 int column[COLUMN] = {13,   12,  11,  10,   9,   8,  7,
                        6,    5,   4,  14,  15,  16, 17,
@@ -19,8 +21,15 @@ int column[COLUMN] = {13,   12,  11,  10,   9,   8,  7,
 int row[ROW]       = {23,   25,  27,  29,  31,  33, 35};
 
 volatile int gameBoard[ROW * COLUMN];
-volatile int tempBoard[ROW * COLUMN];
+int tempBoard[ROW * COLUMN];
 volatile int state_var;
+
+int org_x;
+int org_y;
+int org_z;
+int drop_tick;
+int total_ticks;
+int wait_num;
 
 void setup(){
 //code from Anada Ghassaei
@@ -105,14 +114,24 @@ void game_over(){
 //will clear whatever is stored in the gameBoard
 void clear_gameBoard(){
   cli();
-  for(int i = 0; i < ROW * COLUMN; i++)
+  for(int i = 0; i < ROW * COLUMN; i++){
     gameBoard[i] = 0;
+    tempBoard[i] = 0;
+  }
+  sei();
+}
+
+//will clear the temp board
+void clear_tempBoard(){
+  cli();
+  for(int i = 0; i < ROW * COLUMN; i++)
+    tempBoard[i] = 0;
   sei();
 }
 
 //generic debugging function
 //outputs the current gameboard to the serial monitor
-void print_gameboard(){
+void print_gameBoard(){
   cli();
   for(int z = 0; z < ROW; z++){
     for(int y = 0; y < ROW; y++){
@@ -130,25 +149,29 @@ void print_gameboard(){
 
 //interrupt 1: used for updating the current display
 ISR(TIMER1_COMPA_vect){
- bounceBack_main();
+ main_function();
 }
-
-int bounceBack_ticks;
-int bounceBack_point;
-int bounceBack_dir;
 
 //main control function for the bounce control display
 //this fucntion is called whenever a gameboard needs to be updated
-void bounceBack_main(){
+void main_function(){
+  
+ cli();
+  Serial.println(state_var);
+ sei();
   switch(state_var){
     case 0:
-      bounceBack_setup_function();
+      drop_setup();
+      print_gameBoard();
+      while(1);
       break;
     case 1:
-      bounceBack_pick_point();
+      drop_check();
       break;
     case 2:
-      bounceBack_run();
+      drop_wait();
+      break;
+    case 3:
       break;
     default:
       game_over();
@@ -158,50 +181,106 @@ void bounceBack_main(){
 
 //supporting function 
 //purpose is to initlize all the variables and gameboard for
-void bounceBack_setup_function(){
+void drop_setup(){
   clear_gameBoard();
-  bounceBack_ticks=0;
-  bounceBack_setup_gameBoard();
-  state_var = 1;
+  function_setup_gameBoard();
+  state_var = 2;
 }
 
 //supporting function for setup function
 //purpose is to initilize all the starting leds (on) for the gameBoard
-void bounceBack_setup_gameBoard(){
+void function_setup_gameBoard(){
+  org_x = 1;
+  org_y = 2;
+  org_z = 3;
+  int cur_point;
+    
+  total_ticks = COLUMN + WIDTH - 1;
+  wait_num = 20;
+  drop_tick = 0;
+  sei();
+  for(int x=0; x < ROW;x++){
+    for(int y=0; y < ROW;y++){
+      for(int z=0; z < ROW;z++){
+        cur_point = z*COLUMN + y*ROW + x;
+        gameBoard[cur_point] = return_max_dist(x, y, z);
+        
+      }
+    }
+  }
   cli();
-    for(int i=0; i<COLUMN;i++){
-      if(random(2))
-        gameBoard[i]=1;
-      else
-        gameBoard[(ROW-1)*COLUMN+i]=1;
+}
+
+void drop_wait(){
+  if(wait_num < WAIT){
+    wait_num++;
+  } else {
+    wait_num = 0;
+    state_var = 1;
+  }
+}
+
+//function to be called during dropping
+//checks if drop needs to spread, or start anew
+void drop_check(){
+  if(drop_tick < total_ticks){
+    drop_tick++;
+    drop_do();
+    state_var = 2;
+  } else {
+    state_var = 0;
+  }
+}
+
+//first function that actually effects gameBoard
+//will expand the radius by 1 every tick
+void drop_do(){
+  int max_point, cur_point;
+  cli();
+    for(int x=0; x<ROW; x++){
+      for(int y=0; y<ROW; y++){
+        for(int z=0; z<ROW; z++){
+          cur_point = z*COLUMN + y*ROW + x;
+          max_point = tempBoard[cur_point];
+          if(x < max_point && y < max_point && z < max_point)
+            gameBoard[cur_point] = 1;
+          else
+            gameBoard[cur_point] = 0;
+        }
+      }
     }
   sei();
 }
 
-//first function that actually effects gameBoard
-void bounceBack_pick_point(){
-  bounceBack_point=random(COLUMN);
-  if(gameBoard[bounceBack_point])
-    bounceBack_dir=1;
-  else{
-    bounceBack_dir=-1;
-    bounceBack_point+=COLUMN*(ROW-1);
-  }
-    
-  bounceBack_ticks=0;
-  state_var=2;
-}
+//custom max distance function
+//hopefully will fix my issues
+int return_max_dist(int x, int y, int z){
+  int tx, ty, tz;
+  if(x > org_x)
+    tx = x - org_x;
+  else
+    tx = org_x -x;
 
-void bounceBack_run(){
-  if(bounceBack_ticks < ROW-1){
-    cli();
-      gameBoard[bounceBack_point + bounceBack_ticks*COLUMN*bounceBack_dir]=0;
-      bounceBack_ticks++;
-      gameBoard[bounceBack_point + bounceBack_ticks*COLUMN*bounceBack_dir]=1;
-    sei();
-  } else {
-    state_var=1;
-  }
+  if(y > org_y)
+    ty = y - org_y;
+  else
+    ty = org_y - y;
+
+  if(z > org_z)
+    tz = y - org_z;
+  else
+    tz = org_z - z;
+          
+  if(tx > ty)
+    if(tx > tz)
+      return tx;
+    else
+      return tz;
+  else
+    if(ty > tz)
+      return ty;
+    else
+      return tz;
 }
 
 
@@ -220,4 +299,5 @@ void bounceBack_run(){
 
 
 void loop(){
+  
 }
