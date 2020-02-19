@@ -6,8 +6,10 @@
 //it is meant for being able to start on a new display without having to worry
 //or deal with mixed variable names and loosing yourself within the code
 
+/****************General definitions*******************/
 #define COLUMN  49
 #define ROW     7
+#define TIMEDELAY 2000
 
 int column[COLUMN] = {13,   12,  11,  10,   9,   8,  7,
                        6,    5,   4,  14,  15,  16, 17,
@@ -22,7 +24,10 @@ volatile int gameBoard[ROW * COLUMN];
 volatile int tempBoard[ROW * COLUMN];
 volatile int state_var;
 volatile int main_function;
-int bounce_column_state;
+volatile int past_main;
+
+volatile long oldTime;
+volatile long newTime;
 
 void setup(){
 //code from Anada Ghassaei
@@ -67,9 +72,14 @@ cli();
   for(i = 0; i < ROW * COLUMN; i++)
     gameBoard[i] = 0;
   main_function = 0;
+  past_main = 0;
+  attachInterrupt(digitalPinToInterrupt(19), ISR0, FALLING);
+  oldTime=0;
+  newTime=3000;
   Serial.begin(9600);
   randomSeed(analogRead(0));
 sei();
+
 }
 
 //#####################displaying###################
@@ -93,11 +103,25 @@ ISR(TIMER0_COMPA_vect){
   }
 }
 
+//################Switching Function##################
+void ISR0(){
+  sei();
+      oldTime = newTime;
+      main_function++;
+      if(main_function >= 3)
+        main_function = 0;
+ cli();
+}
+
 //###################helper functions###################
 //will set entire gameBoard to 1 (on)
 //meant to display a fault or error has occured
 void game_over(){
   cli();
+    Serial.print("main_function:");
+    Serial.println(main_function);
+    Serial.print("state_var:");
+    Serial.println(state_var);
     for(int i = 0; i < ROW * COLUMN; i++)
       gameBoard[i] = 1;
   sei();
@@ -112,9 +136,24 @@ void clear_gameBoard(){
   sei();
 }
 
+//generic supporting function
+//will clear whatever is stored in the tempBoard
+void clear_tempBoard(){
+  cli();
+  for(int i = 0; i < ROW * COLUMN; i++)
+    tempBoard[i] = 0;
+  sei();
+}
+
 //##############main control function######################
 //interrupt 1: used for updating the current display
 ISR(TIMER1_COMPA_vect){
+ if(main_function != past_main){
+  if(main_function >= 3)
+    main_function = 0;
+  past_main = main_function;
+  state_var = 0;
+ }
  switch(main_function){
   case 0:
     burst_main();
@@ -134,8 +173,8 @@ ISR(TIMER1_COMPA_vect){
 //##################Burst function#########################
 //variables
 //set up as x, y, z
-int center_point[3];
-int waitVar;
+volatile int center_point[3];
+volatile int waitVar;
 
 //this fucntion is called whenever a gameboard needs to be updated
 void burst_main(){
@@ -189,6 +228,7 @@ void burst_main(){
 //purpose is to initlize all the variables and gameboard for
 void setup_burst_variables(){
   clear_gameBoard();
+  clear_tempBoard();
   burst_setup_gameBoard();
   state_var = 1;
   waitVar = 4;
@@ -313,10 +353,11 @@ void burst_collapse0(){
 
 //#################Column Bounce Function########################
 //variables
-int bounce_column_old_c;
-int bounce_column_new_c;
-int bounce_column_old_r;
-int bounce_column_new_r;
+volatile int bounce_column_state;
+volatile int bounce_column_old_c;
+volatile int bounce_column_new_c;
+volatile int bounce_column_old_r;
+volatile int bounce_column_new_r;
 
 //main control function for the bounce control display
 //this fucntion is called whenever a gameboard needs to be updated
@@ -341,6 +382,7 @@ void bounce_column(){
 //purpose is to initlize all the variables and gameboard for bounce column
 void setup_column(){
   clear_gameBoard();
+  clear_tempBoard();
   bounce_column_setup_gameBoard();
   bounce_column_old_c = 0;
   bounce_column_new_c = 0;
@@ -433,9 +475,9 @@ void decrease_column(){
 
 //################Bounce Back Function#########################
 //variables
-int bounceBack_ticks;
-int bounceBack_point;
-int bounceBack_dir;
+volatile int bounceBack_ticks;
+volatile int bounceBack_point;
+volatile int bounceBack_dir;
 
 
 //main control function for the bounce control display
@@ -461,6 +503,7 @@ void bounceBack_main(){
 //purpose is to initlize all the variables and gameboard for
 void bounceBack_setup_function(){
   clear_gameBoard();
+  clear_tempBoard();
   bounceBack_ticks=0;
   bounceBack_setup_gameBoard();
   state_var = 1;
@@ -518,5 +561,5 @@ void bounceBack_run(){
 
 
 void loop(){
-  
+  newTime = millis();
 }
