@@ -353,7 +353,6 @@ void burst_collapse0(){
 
 //#################Column Bounce Function########################
 //variables
-volatile int bounce_column_state;
 volatile int bounce_column_old_c;
 volatile int bounce_column_new_c;
 volatile int bounce_column_old_r;
@@ -362,7 +361,7 @@ volatile int bounce_column_new_r;
 //main control function for the bounce control display
 //this fucntion is called whenever a gameboard needs to be updated
 void bounce_column(){
-  switch(bounce_column_state){
+  switch(state_var){
     case 0:
       setup_column();
       break;
@@ -388,7 +387,7 @@ void setup_column(){
   bounce_column_new_c = 0;
   bounce_column_old_r = 0;
   bounce_column_new_r = 0;
-  bounce_column_state = 1;
+  state_var = 1;
 }
 
 //supporting function for the bounce column display
@@ -419,7 +418,7 @@ void increase_column(){
   }
 
   if(bounce_column_old_c == COLUMN - 2 && bounce_column_old_r == ROW - 1){
-    bounce_column_state = 2;
+    state_var = 2;
     bounce_column_old_c = COLUMN - 1;
     bounce_column_old_r = ROW - 1;
     bounce_column_new_r = ROW - 1;
@@ -455,7 +454,7 @@ void decrease_column(){
   }
 
   if(bounce_column_new_r == 0 && bounce_column_new_c == 0){
-    bounce_column_state = 1;
+    state_var = 1;
     bounce_column_new_c = 0;
     bounce_column_new_r = 0;
     bounce_column_old_c = 0;
